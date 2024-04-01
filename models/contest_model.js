@@ -2,20 +2,30 @@ import mongoose from "mongoose";
 
 const quizContestSchema = mongoose.Schema(
   {
-    noOfQuestions: {
-      typeof: Number,
-      require: [true, "Number of questions is contest is required"],
+    contestName: {
+      type: "String",
+      require: true,
+      default: "Simple Quiz Contest",
     },
-    questions: [
+    // noOfQuestions: {
+    //   type: Number,
+    //   require: [true, "Number of questions is contest is required"],
+    // },
+    allQuestions: [
       {
-        typeof: mongoose.Types.ObjectId,
+        type: mongoose.Types.ObjectId,
         ref: "Question",
       },
     ],
     contestDuration: {
-      typeof: Number,
+      type: Number,
       require: [true, "Duration of contest is required"],
     },
+    isActive:{
+      type:Boolean,
+      require:[true,"Contest Status is required"],
+      default:true
+    }
   },
   { timestamp: true }
 );

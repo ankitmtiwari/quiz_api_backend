@@ -3,41 +3,41 @@ import mongoose from "mongoose";
 const questionSchema = mongoose.Schema(
   {
     question: {
-      typeof: String,
+      type: String,
       require: [true, "Question is required"],
     },
     allAnswers: [
       {
-        typeof: String,
+        type: String,
         require: true,
       },
     ],
     correctAnswerIndex: {
-      typeof: Number,
+      type: Number,
       require: [true, "Correct Answer Index is required"],
     },
     subject: {
-      typeof: String,
+      type: String,
       require: true,
     },
     level: {
-      typeof: String,
+      type: String,
       require: true,
       enum: ["easy, medium, hard"],
       default:"medium"
     },
     questionType: {
-      typeof: String,
+      type: String,
       require: true,
       enum: ["mcq", "true_False"],
       default:"mcq"
     },
     timeRequired: {
-      typeof: Number,
+      type: Number,
       require: [true, "time required in mandatory"], //Always consider it in seconds
     },
     addedBy: {
-      typeof: mongoose.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "User",
       require: [true, "Added by user is requred"],
     },

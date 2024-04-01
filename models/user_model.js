@@ -3,38 +3,36 @@ import mongoose from "mongoose";
 const userSchema = mongoose.schema(
   {
     firstName: {
-      typeof: String,
+      type: String,
       require: [true, "first name is required"],
-      lowercase: true,
       trim: true,
     },
     lastName: {
-      typeof: String,
+      type: String,
       require: [true, "last name is required"],
-      lowercase: true,
       trim: true,
     },
     email: {
-      typeof: String,
+      type: String,
       require: [true, "Email is required"],
       lowercase: true,
       trim: true,
       unique:true
     },
     phoneNumber: {
-      typeof: Number,
+      type: Number,
       require: [true, "Phone number is required"],
     },
     schoolName: {
-      typeof: String,
+      type: String,
       require: false,
     },
     standard: {
-      typeof: String,
+      type: String,
       require: false,
     },
     role:{
-        typeof:String,
+        type:String,
         enum:["student","teacher","superUser","admin"],
         default:"student"
     }
