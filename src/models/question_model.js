@@ -45,4 +45,4 @@ const questionSchema = mongoose.Schema(
   { timestamp: true }
 );
 
-export const questionModel = mongoose.models("Question", questionSchema);
+export const questionModel = mongoose.model("Question", questionSchema);

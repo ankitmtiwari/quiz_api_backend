@@ -30,4 +30,4 @@ const quizContestSchema = mongoose.Schema(
   { timestamp: true }
 );
 
-export const contestModel = mongoose.models("Contest", quizContestSchema);
+export const contestModel = mongoose.model("Contest", quizContestSchema);

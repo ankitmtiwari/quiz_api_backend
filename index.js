@@ -2,7 +2,7 @@ import { app } from "./app.js";
 import connectDB from "./src/db/connection.js";
 
 const port = 3000;
-const dbUrl = "mongodb://127.0.1.:27017/";
+const dbUrl = "mongodb://127.0.0.1:27017/";
 
 const connectServer = async () => {
   app.listen(port, () => {

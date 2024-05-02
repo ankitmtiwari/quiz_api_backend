@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userSchema = mongoose.schema(
+const userSchema = mongoose.Schema(
   {
     firstName: {
       type: String,
@@ -12,7 +12,7 @@ const userSchema = mongoose.schema(
       require: [true, "last name is required"],
       trim: true,
     },
-    username: {
+    userName: {
       type: String,
       require: true,
       lowercase: true,
@@ -25,6 +25,10 @@ const userSchema = mongoose.schema(
       lowercase: true,
       trim: true,
       unique: true,
+    },
+    password: {
+      type: String,
+      require: [true, "Password is required"],
     },
     phoneNumber: {
       type: Number,
@@ -42,9 +46,10 @@ const userSchema = mongoose.schema(
       type: String,
       enum: ["student", "teacher", "superUser", "admin"],
       default: "student",
+      require: [true, "user role is required"],
     },
   },
   { timestamp: true }
 );
 
-export const userModel = mongoose.models("User", userSchema);
+export const userModel = mongoose.model("User", userSchema);
