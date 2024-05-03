@@ -58,8 +58,33 @@ const registerUserController = async (req, res) => {
       schoolName: schoolName,
       role: role.toLowerCase(),
     });
+
+    if (!user) {
+      res
+        .status(400)
+        .send({ success: false, message: "User not created", data: {} });
+    }
+
+    const createdUser = await userModel.findById(user._id).select("-password");
+
+    if (!createdUser) {
+      return res.status(500).send({
+        success: false,
+        message: "Something went wrong Try to login in",
+      });
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "User Created Successfully",
+      data: createdUser,
+    });
   } catch (error) {
-    console.log("Failed to create/register new user", error);
+    return res.status(400).send({
+      success: false,
+      message: error.message,
+      data: {},
+    });
   }
 };
 
@@ -85,7 +110,7 @@ const updatePasswordController = async (req, res) => {
   ) {
     return res
       .status(400)
-      .send({ success: false, message: "Passwords cannot be empty" });
+      .send({ success: false, message: "Passwords cannot be empty", data: {} });
   }
   // console.log(email, userName, newPassword);
   // check if user already exists with email or username
@@ -94,23 +119,29 @@ const updatePasswordController = async (req, res) => {
   });
 
   if (!existingUser) {
-    return res.status(400).send({ success: false, message: "User Not exists" });
+    return res
+      .status(400)
+      .send({ success: false, message: "User Not exists", data: {} });
   }
 
   const isPasswordCorrect = await existingUser.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
-    return res
-      .status(400)
-      .send({ success: false, message: "old password does not match" });
+    return res.status(400).send({
+      success: false,
+      message: "old password does not match",
+      data: { oldPassword: oldPassword },
+    });
   }
 
   existingUser.password = newPassword;
   await existingUser.save({ validateBeforeSave: false });
 
-  return res
-    .status(201)
-    .send({ success: true, message: "Password Changed successfully" });
+  return res.status(201).send({
+    success: true,
+    message: "Password Changed successfully",
+    data: { newPassword: newPassword },
+  });
 };
 
 export {

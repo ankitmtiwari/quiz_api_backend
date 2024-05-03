@@ -42,7 +42,7 @@ const questionSchema = mongoose.Schema(
       require: [true, "Added by user is requred"],
     },
   },
-  { timestamp: true }
+  { timestamps: true }
 );
 
 export const questionModel = mongoose.model("Question", questionSchema);
