@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const userSchema = mongoose.Schema(
   {
@@ -51,5 +53,20 @@ const userSchema = mongoose.Schema(
   },
   { timestamp: true }
 );
+
+//to check every time userSchema is saving something if password is changed or not
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+
+//check if the given password matches with the stored password
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
 
 export const userModel = mongoose.model("User", userSchema);

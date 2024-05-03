@@ -4,6 +4,7 @@ import {
   loginUserController,
   logoutUserController,
   registerUserController,
+  updatePasswordController,
 } from "../controllers/users_controller.js";
 
 const userRouters = Router();
@@ -13,5 +14,6 @@ userRouters.route("/register").post(registerUserController);
 userRouters.route("/login").post(loginUserController);
 userRouters.route("/logout").post(logoutUserController);
 userRouters.route("/delete").post(deleteUserController);
+userRouters.route("/updatePassword").post(updatePasswordController);
 
 export default userRouters;
