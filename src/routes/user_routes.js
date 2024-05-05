@@ -12,6 +12,7 @@ const userRouters = Router();
 //default route is localhost(domain)/api/v1/users/
 userRouters.route("/register").post(registerUserController);
 userRouters.route("/login").post(loginUserController);
+userRouters.route("/login").get(loginUserController);
 userRouters.route("/logout").post(logoutUserController);
 userRouters.route("/delete").post(deleteUserController);
 userRouters.route("/updatePassword").post(updatePasswordController);

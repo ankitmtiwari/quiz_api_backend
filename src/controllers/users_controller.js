@@ -1,6 +1,4 @@
-import bcrypt from "bcrypt";
 import { userModel } from "../models/user_model.js";
-import { ApiError } from "../utils/api_error.js";
 
 const registerUserController = async (req, res) => {
   //get all the fields
@@ -38,6 +36,7 @@ const registerUserController = async (req, res) => {
     $or: [{ userName }, { email }],
   });
 
+  //error if user already exists
   if (existingUser) {
     console.log(existingUser);
     return res.status(400).send({
@@ -59,14 +58,17 @@ const registerUserController = async (req, res) => {
       role: role.toLowerCase(),
     });
 
+    //server error if user not created
     if (!user) {
       res
-        .status(400)
+        .status(500)
         .send({ success: false, message: "User not created", data: {} });
     }
 
+    //get created users details from db except password
     const createdUser = await userModel.findById(user._id).select("-password");
 
+    //error if no user found
     if (!createdUser) {
       return res.status(500).send({
         success: false,
@@ -89,7 +91,75 @@ const registerUserController = async (req, res) => {
 };
 
 const loginUserController = async (req, res) => {
-  res.send("Login the user");
+  // const { userName, email, password } = req.body;
+  const userName = "ankittiwari";
+  const email = "";
+  const password = "1234";
+
+  //check if atleast email or username is given
+  if (!userName && !email) {
+    return res.status(400).send({
+      success: false,
+      message: "Username Or Email is required",
+      data: {},
+    });
+  }
+
+  //check if user exists with given username or email
+  const existingUser = await userModel.findOne({
+    $or: [{ userName }, { email }],
+  });
+
+  //error if no user found
+  if (!existingUser) {
+    return res.status(400).send({
+      success: false,
+      message: "User Does Not Exist with email or username",
+      data: {},
+    });
+  }
+
+  //if password matches or not
+  const isPasswordValid = await existingUser.isPasswordCorrect(password);
+
+  //error if password is invalid
+  if (!isPasswordValid) {
+    return res
+      .status(400)
+      .send({ success: false, message: "Invalid Credentials", data: {} });
+  }
+
+  //generate  auth Token to keep the user logged in
+  const authToken = await existingUser.createAuthToken();
+
+  //server error if unable to generate auth token
+  if (!authToken) {
+    return res.status(500).send({
+      success: false,
+      message: "Unable to generate auth token",
+      data: {},
+    });
+  }
+
+  //get the user details from db except passowrd
+  const loggedInUser = await userModel
+    .findById(existingUser._id)
+    .select("-password");
+
+  //cofigure options for storing token in browser cookier of the user
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("authToken", authToken, options)
+    .send({
+      success: true,
+      message: "Login Successfull",
+      data: { user: loggedInUser, authToken },
+    });
 };
 
 const logoutUserController = async (req, res) => {
