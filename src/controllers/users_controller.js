@@ -187,7 +187,7 @@ const logoutUserController = async (req, res) => {
 
   await userModel.findByIdAndUpdate(
     // req.user._id,
-    uid,
+    "66350a4c25903f19162a4bb5",
     {
       $unset: {
         authToken: 1, // this removes the field from document
