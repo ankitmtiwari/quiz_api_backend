@@ -1,5 +1,6 @@
 import { userModel } from "../models/user_model.js";
 
+//generate and save authToken and refresh Token
 const generateAuthToken = async (userId) => {
   try {
     const user = await userModel.findById(userId);
@@ -19,6 +20,7 @@ const generateAuthToken = async (userId) => {
   }
 };
 
+//create new user
 const registerUserController = async (req, res) => {
   //get all the fields
   const {
@@ -109,6 +111,7 @@ const registerUserController = async (req, res) => {
   }
 };
 
+//validate and login the user
 const loginUserController = async (req, res) => {
   const { userName, email, password } = req.body;
   // const userName = "ankittiwari";
@@ -182,12 +185,13 @@ const loginUserController = async (req, res) => {
     });
 };
 
+//logout the user and clear authToken
 const logoutUserController = async (req, res) => {
   const { uid } = req.body;
 
   await userModel.findByIdAndUpdate(
     // req.user._id,
-    "66350a4c25903f19162a4bb5",
+    uid,
     {
       $unset: {
         authToken: 1, // this removes the field from document
@@ -210,10 +214,12 @@ const logoutUserController = async (req, res) => {
     .send({ success: true, message: "Logout Successfully", data: {} });
 };
 
+//delete the user from database
 const deleteUserController = async (req, res) => {
   res.send("Delete the user");
 };
 
+//change password
 const updatePasswordController = async (req, res) => {
   const { email, userName, oldPassword, newPassword } = req.body;
 
