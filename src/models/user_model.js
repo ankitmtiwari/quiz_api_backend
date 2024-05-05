@@ -50,6 +50,9 @@ const userSchema = mongoose.Schema(
       default: "student",
       require: [true, "user role is required"],
     },
+    authToken: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

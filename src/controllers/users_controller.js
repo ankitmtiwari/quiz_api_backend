@@ -1,5 +1,24 @@
 import { userModel } from "../models/user_model.js";
 
+const generateAuthToken = async (userId) => {
+  try {
+    const user = await userModel.findById(userId);
+    const authToken = await user.createAuthToken();
+    // const refreshToken = user.generateRefreshToken();
+
+    user.authToken = authToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { authToken };
+  } catch (error) {
+    console.log("ERROR: Failed to create and store auth Token", error);
+    // throw new ApiError(
+    //   500,
+    //   "Something went wrong while generating referesh and access token"
+    // );
+  }
+};
+
 const registerUserController = async (req, res) => {
   //get all the fields
   const {
@@ -91,10 +110,10 @@ const registerUserController = async (req, res) => {
 };
 
 const loginUserController = async (req, res) => {
-  // const { userName, email, password } = req.body;
-  const userName = "ankittiwari";
-  const email = "";
-  const password = "1234";
+  const { userName, email, password } = req.body;
+  // const userName = "ankittiwari";
+  // const email = "";
+  // const password = "1234";
 
   //check if atleast email or username is given
   if (!userName && !email) {
@@ -130,7 +149,8 @@ const loginUserController = async (req, res) => {
   }
 
   //generate  auth Token to keep the user logged in
-  const authToken = await existingUser.createAuthToken();
+  // const authToken = await existingUser.createAuthToken();
+  const authToken = await generateAuthToken(existingUser._id);
 
   //server error if unable to generate auth token
   if (!authToken) {
@@ -144,7 +164,7 @@ const loginUserController = async (req, res) => {
   //get the user details from db except passowrd
   const loggedInUser = await userModel
     .findById(existingUser._id)
-    .select("-password");
+    .select("-password -authToken");
 
   //cofigure options for storing token in browser cookier of the user
   const options = {
@@ -163,7 +183,31 @@ const loginUserController = async (req, res) => {
 };
 
 const logoutUserController = async (req, res) => {
-  res.send("Logout the user");
+  const { uid } = req.body;
+
+  await userModel.findByIdAndUpdate(
+    // req.user._id,
+    uid,
+    {
+      $unset: {
+        authToken: 1, // this removes the field from document
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  //cofigure options for storing token in browser cookier of the user
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("authToken", options)
+    .send({ success: true, message: "Logout Successfully", data: {} });
 };
 
 const deleteUserController = async (req, res) => {
