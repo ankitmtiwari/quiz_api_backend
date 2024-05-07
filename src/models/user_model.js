@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
+const accessTokenDuration = "1d";
+const refreshTokenDuration = "1m";
+
 const userSchema = mongoose.Schema(
   {
     firstName: {
