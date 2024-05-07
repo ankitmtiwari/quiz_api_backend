@@ -1,16 +1,24 @@
 import { userModel } from "../models/user_model.js";
+import jwt from "jsonwebtoken";
 
 //generate and save authToken and refresh Token
-const generateAuthToken = async (userId) => {
+const generateAuthTokens = async (userId) => {
   try {
     const user = await userModel.findById(userId);
-    const authToken = await user.createAuthToken();
-    // const refreshToken = user.generateRefreshToken();
+    //short term
+    const accessToken = await user.createAccessToken();
+    //long term
+    const refreshToken = await user.createRefreshToken();
 
-    user.authToken = authToken;
+    //short term
+    user.accessToken = accessToken;
+    //long term
+    user.refreshToken = refreshToken;
+
+    //save the updated data
     await user.save({ validateBeforeSave: false });
 
-    return { authToken };
+    return { accessToken, refreshToken };
   } catch (error) {
     console.log("ERROR: Failed to create and store auth Token", error);
     // throw new ApiError(
@@ -147,16 +155,17 @@ const loginUserController = async (req, res) => {
   //error if password is invalid
   if (!isPasswordValid) {
     return res
-      .status(400)
+      .status(401)
       .send({ success: false, message: "Invalid Credentials", data: {} });
   }
 
   //generate  auth Token to keep the user logged in
-  // const authToken = await existingUser.createAuthToken();
-  const authToken = await generateAuthToken(existingUser._id);
+  const { accessToken, refreshToken } = await generateAuthTokens(
+    existingUser._id
+  );
 
   //server error if unable to generate auth token
-  if (!authToken) {
+  if (!accessToken || !refreshToken) {
     return res.status(500).send({
       success: false,
       message: "Unable to generate auth token",
@@ -164,10 +173,11 @@ const loginUserController = async (req, res) => {
     });
   }
 
+  console.log("ACCESS TOKEN:", accessToken);
   //get the user details from db except passowrd
   const loggedInUser = await userModel
     .findById(existingUser._id)
-    .select("-password -authToken");
+    .select("-password -accessToken -refreshToken");
 
   //cofigure options for storing token in browser cookier of the user
   const options = {
@@ -177,24 +187,32 @@ const loginUserController = async (req, res) => {
 
   return res
     .status(200)
-    .cookie("authToken", authToken, options)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
     .send({
       success: true,
       message: "Login Successfull",
-      data: { user: loggedInUser, authToken },
+      data: { user: loggedInUser, accessToken, refreshToken },
     });
 };
 
 //logout the user and clear authToken
 const logoutUserController = async (req, res) => {
-  const { uid } = req.body;
+  const { uid } = req.user._id;
+  console.log(req.user);
+
+  if (!uid) {
+    return res
+      .status(400)
+      .send({ success: false, message: "Invalid request", data: {} });
+  }
 
   await userModel.findByIdAndUpdate(
-    // req.user._id,
     uid,
     {
       $unset: {
-        authToken: 1, // this removes the field from document
+        accessToken: 1, // this removes the field from document
+        refreshToken: 1, // this removes the field from document
       },
     },
     {
@@ -210,7 +228,8 @@ const logoutUserController = async (req, res) => {
 
   return res
     .status(200)
-    .clearCookie("authToken", options)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
     .send({ success: true, message: "Logout Successfully", data: {} });
 };
 
@@ -221,47 +240,69 @@ const deleteUserController = async (req, res) => {
 
 //change password
 const updatePasswordController = async (req, res) => {
-  const { email, userName, oldPassword, newPassword } = req.body;
+  const { email, userName, oldPassword, newPassword, token } = req.body;
 
   if (
     [oldPassword, newPassword].some(
       (field) => field === "" || field === undefined || field === null
     )
   ) {
-    return res
-      .status(400)
-      .send({ success: false, message: "Passwords cannot be empty", data: {} });
+    return res.status(400).send({
+      success: false,
+      message: "Old and New Password is required",
+      data: {},
+    });
   }
-  // console.log(email, userName, newPassword);
+
+  try {
+    const decodedToken = jwt.verify(token, "Mai chhota hu chhota hi rahunga");
+  } catch (error) {
+    return res
+      .status(401)
+      .send({ success: false, message: error.name, data: error });
+  }
+
   // check if user already exists with email or username
   const existingUser = await userModel.findOne({
     $or: [{ userName }, { email }],
   });
 
+  //error if user not exist
   if (!existingUser) {
     return res
       .status(400)
       .send({ success: false, message: "User Not exists", data: {} });
   }
 
+  //check if given password matches to the stored password
   const isPasswordCorrect = await existingUser.isPasswordCorrect(oldPassword);
 
+  //check if password matched or not
   if (!isPasswordCorrect) {
-    return res.status(400).send({
+    return res.status(401).send({
       success: false,
       message: "old password does not match",
       data: { oldPassword: oldPassword },
     });
   }
 
+  //update the new password in the db
   existingUser.password = newPassword;
   await existingUser.save({ validateBeforeSave: false });
 
+  //success response and give the newPassword
   return res.status(201).send({
     success: true,
     message: "Password Changed successfully",
     data: { newPassword: newPassword },
   });
+};
+
+const getCurrentUser = async (req, res) => {
+  const user = req.user;
+  return res
+    .status(200)
+    .send({ success: true, message: "user fetched successfully", data: user });
 };
 
 export {

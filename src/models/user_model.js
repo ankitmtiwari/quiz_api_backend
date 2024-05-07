@@ -50,7 +50,10 @@ const userSchema = mongoose.Schema(
       default: "student",
       require: [true, "user role is required"],
     },
-    authToken: {
+    accessToken: {
+      type: String,
+    },
+    refreshToken: {
       type: String,
     },
   },
@@ -71,7 +74,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-userSchema.methods.createAuthToken = async function () {
+//long term session like token to make users keep logged in for months or till logged out
+userSchema.methods.createRefreshToken = async function () {
   return await jwt.sign(
     {
       _id: this._id,
@@ -80,10 +84,24 @@ userSchema.methods.createAuthToken = async function () {
       lastName: this.lastName,
       userName: this.userName,
     },
-    "This is secret key",
+    "Are deewaano mujhe pahchanp Mai hu don mai hu don",
     {
-      expiresIn: "1h",
+      expiresIn: "1d",
     }
   );
 };
+
+//short term token like short sessions to
+userSchema.methods.createAccessToken = async function () {
+  return await jwt.sign(
+    {
+      _id: this._id,
+    },
+    "Mai chhota hu chhota hi rahunga",
+    {
+      expiresIn: "1d",
+    }
+  );
+};
+
 export const userModel = mongoose.model("User", userSchema);
