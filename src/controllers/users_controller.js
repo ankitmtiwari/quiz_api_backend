@@ -1,3 +1,4 @@
+import { memoryStorage } from "multer";
 import { userModel } from "../models/user_model.js";
 import jwt from "jsonwebtoken";
 
@@ -173,7 +174,7 @@ const loginUserController = async (req, res) => {
     });
   }
 
-  console.log("ACCESS TOKEN:", accessToken);
+  // console.log("ACCESS TOKEN:", accessToken);
   //get the user details from db except passowrd
   const loggedInUser = await userModel
     .findById(existingUser._id)
@@ -198,10 +199,7 @@ const loginUserController = async (req, res) => {
 
 //logout the user and clear authToken
 const logoutUserController = async (req, res) => {
-  const { uid } = req.user._id;
-  console.log(req.user);
-
-  if (!uid) {
+  if (!req.user._id) {
     return res
       .status(400)
       .send({ success: false, message: "Invalid request", data: {} });
@@ -235,7 +233,7 @@ const logoutUserController = async (req, res) => {
 
 //delete the user from database
 const deleteUserController = async (req, res) => {
-  res.send("Delete the user");
+  res.status(200).send({ success: true, message: "Delete the user", data: {} });
 };
 
 //change password
@@ -311,4 +309,5 @@ export {
   logoutUserController,
   deleteUserController,
   updatePasswordController,
+  getCurrentUser,
 };

@@ -5,6 +5,7 @@ import {
   logoutUserController,
   registerUserController,
   updatePasswordController,
+  getCurrentUser,
 } from "../controllers/users_controller.js";
 import { checkAuthMiddleware } from "../services/auth_middleware.js";
 
@@ -16,5 +17,6 @@ userRouters.route("/login").post(loginUserController);
 userRouters.route("/logout").post(checkAuthMiddleware, logoutUserController);
 userRouters.route("/delete").post(deleteUserController);
 userRouters.route("/updatePassword").post(updatePasswordController);
+userRouters.route("/getCurrentUser").get(checkAuthMiddleware, getCurrentUser);
 
 export default userRouters;

@@ -1,13 +1,12 @@
 import jwt from "jsonwebtoken";
 import { userModel } from "../models/user_model.js";
 
-export const checkAuthMiddleware = async (req, _, next) => {
+export const checkAuthMiddleware = async (req, res, next) => {
   try {
+    console.log("CAME IN AUTH MIDDLEWARE");
     const accessToken =
       req.header("Authorization")?.replace("Bearer ", "") ||
       req.cookies?.accessToken;
-
-    console.log("Here come for auth middleware", accessToken);
 
     if (!accessToken) {
       return res
@@ -31,7 +30,7 @@ export const checkAuthMiddleware = async (req, _, next) => {
     }
 
     req.user = user;
-    console.log(user);
+    // console.log("User saved", req.user);
     next();
   } catch (error) {
     return res.status(401).send({
