@@ -2,9 +2,6 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const accessTokenDuration = "1d";
-const refreshTokenDuration = "1m";
-
 const userSchema = mongoose.Schema(
   {
     firstName: {
@@ -87,9 +84,9 @@ userSchema.methods.createRefreshToken = async function () {
       lastName: this.lastName,
       userName: this.userName,
     },
-    "Are deewaano mujhe pahchanp Mai hu don mai hu don",
+    process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: "1d",
+      expiresIn: REFRESH_TOKEN_DURATION,
     }
   );
 };
@@ -100,9 +97,9 @@ userSchema.methods.createAccessToken = async function () {
     {
       _id: this._id,
     },
-    "Mai chhota hu chhota hi rahunga",
+    process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: "1d",
+      expiresIn: process.env.ACCESS_TOKEN_DURATION,
     }
   );
 };

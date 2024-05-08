@@ -6,11 +6,9 @@ const dbName = "quizzer";
 
 const connectDB = async (dbUrl) => {
   try {
-    const connectionInstance = await mongoose
-      .connect(`${dbUrl}${dbName}`)
-      .then(() => {
-        console.log("DB Connection Success");
-      });
+    await mongoose.connect(`${dbUrl}${dbName}`).then(() => {
+      console.log("DB Connection Success");
+    });
   } catch (error) {
     console.log(`Error while connecting to database ${error}`);
     process.exit(1);

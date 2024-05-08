@@ -7,7 +7,8 @@ import {
   updatePasswordController,
   getCurrentUser,
 } from "../controllers/users_controller.js";
-import { checkAuthMiddleware } from "../services/auth_middleware.js";
+
+import { checkAuthMiddleware } from "../middlewares/auth_middleware.js";
 
 const userRouters = Router();
 

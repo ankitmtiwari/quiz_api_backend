@@ -1,16 +1,19 @@
 import { app } from "./app.js";
 import connectDB from "./src/db/connection.js";
+import dotenv from "dotenv"
 
-const port = 3000;
-const dbUrl = "mongodb://127.0.0.1:27017/";
+dotenv.config({
+  path: './.env'
+})
+
 
 const connectServer = async () => {
-  app.listen(port, () => {
-    console.log(`app listening at http://localhost:${port}`);
+  app.listen(process.env.PORT, () => {
+    console.log(`app listening at ${process.env.PORT}`);
   });
 };
 
-connectDB(dbUrl)
+await connectDB(process.env.DB_CONNECT_URL)
   .then(() => {
     connectServer();
   })
