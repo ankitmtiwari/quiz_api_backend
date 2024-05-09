@@ -5,6 +5,7 @@ const questionSchema = mongoose.Schema(
     question: {
       type: String,
       required: [true, "Question is required"],
+      trim: true,
     },
     allAnswers: [
       {
@@ -44,5 +45,9 @@ const questionSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// questionSchema.pre("save", async function (next) {
+//   console.log("Before creating new question", this.question);
+// });
 
 export const questionModel = mongoose.model("Question", questionSchema);

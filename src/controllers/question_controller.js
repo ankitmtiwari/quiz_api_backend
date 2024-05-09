@@ -1,5 +1,6 @@
 import { userModel } from "../models/user_model.js";
 import { questionModel } from "../models/question_model.js";
+
 const createQuestionController = async (req, res) => {
   //get data sent from client
   const {
@@ -54,6 +55,26 @@ const createQuestionController = async (req, res) => {
   }
 
   try {
+    //check if same question is already added with the same difficuly level
+    const existingQuestion = await questionModel
+      .findOne({
+        $and: [{ question }, { level }],
+      })
+      .populate({
+        path: "addedBy",
+        select: "firstName lastName userName -_id",
+      });
+
+    //retuen the existing question if question and level is same
+    if (existingQuestion) {
+      return res.status(400).send({
+        success: false,
+        message: "Question already exists",
+        data: { existingQuestion },
+      });
+    }
+
+    //create a new question
     const createdQuestion = await questionModel.create({
       question,
       allAnswers,
@@ -64,12 +85,16 @@ const createQuestionController = async (req, res) => {
       timeRequired,
       addedBy: req.user._id,
     });
+
+    //error if created question not found
     if (!createdQuestion) {
       return res
         .status(500)
         .send({ success: false, message: "Failed to add question", data: {} });
     }
 
+    console.log("After Creating Question");
+    //remove addedBy field before sending
     const c_que = await questionModel
       .findById(createdQuestion._id)
       .select("-addedBy");
