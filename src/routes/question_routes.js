@@ -4,6 +4,7 @@ import {
   deleteQuestionController,
   getAllQuestionController,
   updateQuestionController,
+  getRandomQuestionController,
 } from "../controllers/question_controller.js";
 import { checkAuthMiddleware } from "../middlewares/auth_middleware.js";
 
@@ -21,5 +22,6 @@ questionRoutes
 questionRoutes
   .route("/getall")
   .post(checkAuthMiddleware, getAllQuestionController);
+questionRoutes.route("/getRandomQuestion").get(getRandomQuestionController);
 
 export { questionRoutes };

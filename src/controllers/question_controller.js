@@ -125,9 +125,61 @@ const getAllQuestionController = async (req, res) => {
   res.send("Get All Question Sucess");
 };
 
+const getRandomQuestionController = async (req, res) => {
+  const { level, subject, questionType } = req.body;
+  if (
+    [level, subject, questionType].every(
+      (field) => field?.trim() === undefined || field?.trim() === ""
+    )
+  ) {
+    return res.status(400).send({
+      success: false,
+      message: "Atleast one parameter required to get a question of choice",
+      data: {},
+    });
+  }
+
+  // const r_que = await questionModel.find({
+  //   level: level,
+  //   subject: subject,
+  //   questionType: questionType,
+  // });
+
+  const matchConditions = {};
+
+  // Add conditions for provided parameters
+  if (level) {
+    matchConditions.level = level;
+  }
+  if (subject) {
+    matchConditions.subject = subject;
+  }
+  if (questionType) {
+    matchConditions.questionType = questionType;
+  }
+  // Get one random document matching {a: 10} from the mycoll collection.
+  const r_que = await questionModel.aggregate([
+    { $match: matchConditions },
+    { $sample: { size: 1 } },
+  ]);
+
+  if (!r_que) {
+    return res
+      .status(404)
+      .send({ success: false, message: "No question found", data: {} });
+  }
+
+  return res.status(200).send({
+    success: true,
+    message: "Question fetched successfully",
+    data: r_que,
+  });
+};
+
 export {
   createQuestionController,
   updateQuestionController,
   deleteQuestionController,
   getAllQuestionController,
+  getRandomQuestionController,
 };
