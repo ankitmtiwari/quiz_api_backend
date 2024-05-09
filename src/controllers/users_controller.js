@@ -1,5 +1,5 @@
-import { memoryStorage } from "multer";
 import { userModel } from "../models/user_model.js";
+import { ApiResponse } from "../utils/api_response.js";
 import jwt from "jsonwebtoken";
 
 //generate and save authToken and refresh Token
@@ -298,9 +298,10 @@ const updatePasswordController = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   const user = req.user;
-  return res
-    .status(200)
-    .send({ success: true, message: "user fetched successfully", data: user });
+  return new ApiResponse(200, user, "user fetched successfully");
+  // return res
+  //   .status(200)
+  //   .send({ success: true, message: "user fetched successfully", data: user });
 };
 
 export {
