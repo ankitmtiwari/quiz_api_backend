@@ -3,7 +3,7 @@ import { userModel } from "../models/user_model.js";
 
 export const checkAuthMiddleware = async (req, res, next) => {
   try {
-    console.log("CAME IN AUTH MIDDLEWARE");
+    // console.log("CAME IN AUTH MIDDLEWARE");
     const accessToken =
       req.header("Authorization")?.replace("Bearer ", "") ||
       req.cookies?.accessToken;
@@ -14,13 +14,15 @@ export const checkAuthMiddleware = async (req, res, next) => {
         .send({ success: false, message: "Unauthorised request", data: {} });
     }
 
-    const decodedToken = jwt.verify(
+    // console.log("Middleware access:", accessToken);
+
+    const decodedAccessToken = jwt.verify(
       accessToken,
-      "Mai chhota hu chhota hi rahunga"
+      process.env.ACCESS_TOKEN_SECRET
     );
 
     const user = await userModel
-      .findById(decodedToken?._id)
+      .findById(decodedAccessToken?._id)
       .select("-password -refreshToken");
 
     if (!user) {
@@ -30,7 +32,7 @@ export const checkAuthMiddleware = async (req, res, next) => {
     }
 
     req.user = user;
-    // console.log("User saved", req.user);
+    // console.log("Authorization Done");
     next();
   } catch (error) {
     return res.status(401).send({

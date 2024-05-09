@@ -5,12 +5,21 @@ import {
   getAllQuestionController,
   updateQuestionController,
 } from "../controllers/question_controller.js";
+import { checkAuthMiddleware } from "../middlewares/auth_middleware.js";
 
 const questionRoutes = Router();
 
-questionRoutes.route("/create").post(createQuestionController);
-questionRoutes.route("/update").post(updateQuestionController);
-questionRoutes.route("/delete").post(deleteQuestionController);
-questionRoutes.route("/getall").post(getAllQuestionController);
+questionRoutes
+  .route("/create")
+  .post(checkAuthMiddleware, createQuestionController);
+questionRoutes
+  .route("/update")
+  .post(checkAuthMiddleware, updateQuestionController);
+questionRoutes
+  .route("/delete")
+  .post(checkAuthMiddleware, deleteQuestionController);
+questionRoutes
+  .route("/getall")
+  .post(checkAuthMiddleware, getAllQuestionController);
 
 export { questionRoutes };

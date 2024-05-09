@@ -1,6 +1,8 @@
 import { userModel } from "../models/user_model.js";
 import { ApiResponse } from "../utils/api_response.js";
+import { ApiError } from "../utils/api_error.js";
 import jwt from "jsonwebtoken";
+import { asyncHandler } from "../utils/async_handler.js";
 
 //generate and save authToken and refresh Token
 const generateAuthTokens = async (userId) => {
@@ -296,13 +298,17 @@ const updatePasswordController = async (req, res) => {
   });
 };
 
-const getCurrentUser = async (req, res) => {
+//get the current User
+const getCurrentUser = asyncHandler(async (req, res) => {
   const user = req.user;
-  return new ApiResponse(200, user, "user fetched successfully");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "user fetched successfully"));
   // return res
   //   .status(200)
   //   .send({ success: true, message: "user fetched successfully", data: user });
-};
+});
 
 export {
   registerUserController,
