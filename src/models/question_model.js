@@ -46,6 +46,10 @@ const questionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+questionSchema.index(
+  { question: 1, level: 1, timeRequired: 1 },
+  { unique: true }
+);
 // questionSchema.pre("save", async function (next) {
 //   console.log("Before creating new question", this.question);
 // });
