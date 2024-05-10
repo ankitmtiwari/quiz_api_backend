@@ -18,7 +18,7 @@ questionRoutes
 //update question
 questionRoutes
   .route("/update")
-  .post(checkAuthMiddleware, updateQuestionController);
+  .patch(checkAuthMiddleware, updateQuestionController);
 
 //delete question
 questionRoutes
