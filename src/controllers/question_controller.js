@@ -114,7 +114,111 @@ const createQuestionController = async (req, res) => {
 };
 
 const updateQuestionController = async (req, res) => {
-  res.send("Update Question Sucess");
+  //get the data from client
+  const {
+    quid,
+    question,
+    allAnswers,
+    correctAnswerIndex,
+    subject,
+    level,
+    questionType,
+    timeRequired,
+  } = req.body;
+
+  //error if quid(question id) is not given
+  if (!quid) {
+    return res
+      .status(400)
+      .send({ success: false, message: "question id is required", data: {} });
+  }
+
+  //method one to make a object that has all the update fileds
+  /*
+  // const fieldsToUpdate = {};
+  // if (question) {
+  //   fieldsToUpdate.question = question;
+  // }
+  // if (allAnswers) {
+  //   fieldsToUpdate.allAnswers = allAnswers;
+  // }
+  // if (correctAnswerIndex) {
+  //   fieldsToUpdate.correctAnswerIndex = correctAnswerIndex;
+  // }
+  // if (subject) {
+  //   fieldsToUpdate.subject = subject;
+  // }
+  // if (level) {
+  //   fieldsToUpdate.level = level;
+  // }
+
+  // if (questionType) {
+  //   fieldsToUpdate.questionType = questionType;
+  // }
+  // if (timeRequired) {
+  //   fieldsToUpdate.timeRequired = timeRequired;
+  // }
+*/
+
+  //method two to make a object that has all the update fileds
+  /*
+  // Object.assign(fieldsToUpdate, {
+  //   question,
+  //   allAnswers,
+  //   correctAnswerIndex,
+  //   subject,
+  //   level,
+  //   questionType,
+  //   timeRequired,
+  // });
+*/
+
+  //method three to make a object that has all the update fileds
+  const fieldsToUpdate = {
+    question,
+    allAnswers,
+    correctAnswerIndex,
+    subject,
+    level,
+    questionType,
+    timeRequired,
+  };
+
+  Object.keys(fieldsToUpdate).forEach((key) => {
+    if (fieldsToUpdate[key] === undefined) {
+      delete fieldsToUpdate[key];
+    }
+  });
+
+  try {
+    //update the fields
+    const updatedFields = await questionModel.updateOne(
+      { _id: quid },
+      {
+        $set: fieldsToUpdate,
+      }
+    );
+    //error if modified count is not 1 as we are updating only one question here
+    if (updatedFields.modifiedCount != 1) {
+      return res.status(400).send({
+        success: false,
+        message: "No fields updated",
+        data: {},
+      });
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "Question Updated Successfully",
+      data: fieldsToUpdate,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: error.message,
+      data: fieldsToUpdate,
+    });
+  }
 };
 
 const deleteQuestionController = async (req, res) => {
