@@ -201,46 +201,88 @@ const loginUserController = async (req, res) => {
 
 //logout the user and clear authToken
 const logoutUserController = async (req, res) => {
-  if (!req.user._id) {
+  try {
+    if (!req.user._id) {
+      return res.status(401).send({
+        success: false,
+        message: "Invalid request or UnAuthorized request",
+        data: {},
+      });
+    }
+
+    await userModel
+      .findByIdAndUpdate(
+        req.user._id,
+        {
+          $unset: {
+            accessToken: 1, // this removes the field from document
+            refreshToken: 1, // this removes the field from document
+          },
+        },
+        {
+          new: true,
+        }
+      )
+      .catch((er) => {
+        return res
+          .status(500)
+          .send({ success: false, message: "Failed to clear token", data: er });
+      });
+
+    //cofigure options for storing token in browser cookier of the user
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .send({ success: true, message: "Logout Successfully", data: {} });
+  } catch (error) {
     return res
       .status(400)
-      .send({ success: false, message: "Invalid request", data: {} });
+      .send({ success: false, message: error.message, data: error });
   }
-
-  await userModel.findByIdAndUpdate(
-    uid,
-    {
-      $unset: {
-        accessToken: 1, // this removes the field from document
-        refreshToken: 1, // this removes the field from document
-      },
-    },
-    {
-      new: true,
-    }
-  );
-
-  //cofigure options for storing token in browser cookier of the user
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .send({ success: true, message: "Logout Successfully", data: {} });
 };
 
 //delete the user from database
 const deleteUserController = async (req, res) => {
-  res.status(200).send({ success: true, message: "Delete the user", data: {} });
+  if (!req.user._id) {
+    return res.status(401).send({
+      success: false,
+      message: "Invalid request or UnAuthorized request",
+      data: {},
+    });
+  }
+
+  const acDeleteSummary = await userModel.updateOne(
+    { _id: req.user._id },
+    { $set: { isAcDeleted: true } }
+  );
+
+  if (acDeleteSummary.modifiedCount != 1) {
+    return res
+      .status(500)
+      .send({ success: false, message: "Failed to delete account", data: {} });
+  }
+  res
+    .status(200)
+    .send({ success: true, message: "User Delete Successfully", data: {} });
 };
 
 //change password
 const updatePasswordController = async (req, res) => {
-  const { email, userName, oldPassword, newPassword, token } = req.body;
+  const { oldPassword, newPassword } = req.body;
+
+  if (!req.user._id) {
+    return res.status(401).send({
+      success: false,
+      message: "Invalid request or UnAuthorized request",
+      data: {},
+    });
+  }
 
   if (
     [oldPassword, newPassword].some(
@@ -254,25 +296,8 @@ const updatePasswordController = async (req, res) => {
     });
   }
 
-  try {
-    const decodedToken = jwt.verify(token, "Mai chhota hu chhota hi rahunga");
-  } catch (error) {
-    return res
-      .status(401)
-      .send({ success: false, message: error.name, data: error });
-  }
-
-  // check if user already exists with email or username
-  const existingUser = await userModel.findOne({
-    $or: [{ userName }, { email }],
-  });
-
-  //error if user not exist
-  if (!existingUser) {
-    return res
-      .status(400)
-      .send({ success: false, message: "User Not exists", data: {} });
-  }
+  //get the existing user
+  const existingUser = await userModel.findById(req.user._id);
 
   //check if given password matches to the stored password
   const isPasswordCorrect = await existingUser.isPasswordCorrect(oldPassword);
@@ -282,7 +307,7 @@ const updatePasswordController = async (req, res) => {
     return res.status(401).send({
       success: false,
       message: "old password does not match",
-      data: { oldPassword: oldPassword },
+      data: { oldPassword, newPassword },
     });
   }
 
