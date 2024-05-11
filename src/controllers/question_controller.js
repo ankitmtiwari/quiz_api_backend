@@ -191,6 +191,27 @@ const updateQuestionController = async (req, res) => {
   });
 
   try {
+    //check if the question exists with with same level
+    const matchedQuestion = await questionModel.aggregate([
+      {
+        $match: {
+          question: question,
+          level: level,
+          // timeRequired: timeRequired,
+        },
+      },
+      { $sample: { size: 1 } },
+    ]);
+
+    //error if question with the same level already exists
+    if (matchedQuestion.length) {
+      return res.status(400).send({
+        success: false,
+        message: "Question Already Exists",
+        data: fieldsToUpdate,
+      });
+    }
+
     //update the fields
     const updatedFields = await questionModel.updateOne(
       { _id: quid },
@@ -198,6 +219,7 @@ const updateQuestionController = async (req, res) => {
         $set: fieldsToUpdate,
       }
     );
+
     //error if modified count is not 1 as we are updating only one question here
     if (updatedFields.modifiedCount != 1) {
       return res.status(400).send({
