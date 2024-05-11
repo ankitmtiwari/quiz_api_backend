@@ -33,16 +33,14 @@ export const checkAuthMiddleware = async (req, res, next) => {
         .send({ success: false, message: "Invalid Access Token", date: {} });
     }
 
-    console.log(user);
+    // console.log(user);
     //error if user account is deleted
     if (user.isAcDeleted) {
-      return res
-        .status(400)
-        .send({
-          success: false,
-          message: "Account Deleted, Need to recover",
-          data: {},
-        });
+      return res.status(400).send({
+        success: false,
+        message: "Account Deleted, Need to recover",
+        data: {},
+      });
     }
 
     req.user = user;

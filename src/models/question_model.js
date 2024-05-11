@@ -42,6 +42,10 @@ const questionSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Added by user is requred"],
     },
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

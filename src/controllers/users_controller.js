@@ -18,6 +18,8 @@ const generateAuthTokens = async (userId) => {
     //long term
     user.refreshToken = refreshToken;
 
+    user.isAcDeleted = false;
+    user.isAcDeactivated = false;
     //save the updated data
     await user.save({ validateBeforeSave: false });
 

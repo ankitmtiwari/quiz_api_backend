@@ -260,7 +260,8 @@ const getRandomQuestionController = async (req, res) => {
   ) {
     return res.status(400).send({
       success: false,
-      message: "Atleast one parameter required to get a question of choice",
+      message:
+        "Atleast one parameter required (level, subject, questionType) to get a question of choice",
       data: {},
     });
   }
@@ -289,7 +290,7 @@ const getRandomQuestionController = async (req, res) => {
     { $sample: { size: 1 } },
   ]);
 
-  if (!r_que) {
+  if (!r_que || !Array.isArray(r_que) || r_que.length === 0) {
     return res
       .status(404)
       .send({ success: false, message: "No question found", data: {} });
@@ -298,7 +299,7 @@ const getRandomQuestionController = async (req, res) => {
   return res.status(200).send({
     success: true,
     message: "Question fetched successfully",
-    data: r_que,
+    data: r_que[0],
   });
 };
 

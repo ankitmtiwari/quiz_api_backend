@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isAcDeleted: {
+    isAcDeactivated: {
       type: Boolean,
       default: false,
     },
