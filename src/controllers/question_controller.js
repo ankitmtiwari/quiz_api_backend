@@ -1,6 +1,11 @@
 import { userModel } from "../models/user_model.js";
 import { questionModel } from "../models/question_model.js";
 
+const getExistingQuestionById = async (quid) => {
+  const existingQuestion = await questionModel.findById(quid);
+  return { existingQuestion };
+};
+
 const createQuestionController = async (req, res) => {
   //get data sent from client
   const {
@@ -133,6 +138,17 @@ const updateQuestionController = async (req, res) => {
       .send({ success: false, message: "question id is required", data: {} });
   }
 
+  const existingQuestion = await questionModel.findById(quid);
+
+  //error if question does not exists with given id
+  if (!existingQuestion) {
+    return res.status(404).send({
+      success: false,
+      message: "Question does not exists with given credentials",
+      data: { quid },
+    });
+  }
+
   //method one to make a object that has all the update fileds
   /*
   // const fieldsToUpdate = {};
@@ -244,7 +260,44 @@ const updateQuestionController = async (req, res) => {
 };
 
 const deleteQuestionController = async (req, res) => {
-  res.send("Delete Question Sucess");
+  const { quid } = req.body;
+  if (!req.user._id) {
+    return res.status(401).send({
+      success: false,
+      message: "Invalid request or UnAuthorized request",
+      data: {},
+    });
+  }
+  // console.log(quid);
+  // const existingQuestion = await questionModel.findById(quid);
+
+  // //error if question does not exists with given id
+  // if (!existingQuestion) {
+  //   return res.status(404).send({
+  //     success: false,
+  //     message: "Question does not exists with given credentials",
+  //     data: { quid },
+  //   });
+  // }
+  const questionDeeleteMarkSUmmary = await questionModel
+    .updateOne({ _id: quid }, { $set: { isActive: false } })
+    .catch((err) => {
+      return res.status(500).send({
+        success: false,
+        message: "Failed to mark as deleted",
+        data: err,
+      });
+    });
+
+  // console.log(questionDeeleteMarkSUmmary);
+  if (questionDeeleteMarkSUmmary.modifiedCount != 1) {
+    return res
+      .status(400)
+      .send({ success: false, message: "Failed to mark as deleted", data: {} });
+  }
+  return res
+    .status(200)
+    .send({ success: true, message: "Delete Question Sucess", data: {} });
 };
 
 const getAllQuestionController = async (req, res) => {

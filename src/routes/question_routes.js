@@ -23,7 +23,7 @@ questionRoutes
 //delete question
 questionRoutes
   .route("/delete")
-  .post(checkAuthMiddleware, deleteQuestionController);
+  .delete(checkAuthMiddleware, deleteQuestionController);
 
 //get all questions
 questionRoutes
