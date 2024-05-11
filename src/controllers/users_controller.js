@@ -259,17 +259,36 @@ const deleteUserController = async (req, res) => {
 
   const acDeleteSummary = await userModel.updateOne(
     { _id: req.user._id },
-    { $set: { isAcDeleted: true } }
+    {
+      $set: { isAcDeleted: true },
+      $unset: {
+        accessToken: 1, // this removes the field from document
+        refreshToken: 1, // this removes the field from document
+      },
+    }
   );
+
+  //cofigure options for storing token in browser cookier of the user
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
 
   if (acDeleteSummary.modifiedCount != 1) {
     return res
       .status(500)
       .send({ success: false, message: "Failed to delete account", data: {} });
   }
+
   res
     .status(200)
-    .send({ success: true, message: "User Delete Successfully", data: {} });
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .send({
+      success: true,
+      message: "User Deleted And logged out Successfully",
+      data: {},
+    });
 };
 
 //change password
