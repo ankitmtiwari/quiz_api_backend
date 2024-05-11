@@ -3,7 +3,7 @@ import { questionModel } from "../models/question_model.js";
 
 const getExistingQuestionById = async (quid) => {
   const existingQuestion = await questionModel.findById(quid);
-  return { existingQuestion };
+  return existingQuestion;
 };
 
 const createQuestionController = async (req, res) => {
@@ -18,14 +18,6 @@ const createQuestionController = async (req, res) => {
     timeRequired,
   } = req.body;
 
-  //check if atleast 2 options are given
-  if (allAnswers.length < 2) {
-    return res.status(400).send({
-      success: false,
-      message: "minimum two answers are required",
-      data: { allAnswers },
-    });
-  }
   //check if all fields are provided
   if (
     [
@@ -40,6 +32,15 @@ const createQuestionController = async (req, res) => {
     return res
       .status(400)
       .send({ success: false, message: "All Fields are required" });
+  }
+
+  //check if atleast 2 options are given
+  if (allAnswers.length < 2) {
+    return res.status(400).send({
+      success: false,
+      message: "minimum two answers are required",
+      data: { allAnswers },
+    });
   }
 
   //check if user is available through middleware
@@ -138,17 +139,6 @@ const updateQuestionController = async (req, res) => {
       .send({ success: false, message: "question id is required", data: {} });
   }
 
-  const existingQuestion = await questionModel.findById(quid);
-
-  //error if question does not exists with given id
-  if (!existingQuestion) {
-    return res.status(404).send({
-      success: false,
-      message: "Question does not exists with given credentials",
-      data: { quid },
-    });
-  }
-
   //method one to make a object that has all the update fileds
   /*
   // const fieldsToUpdate = {};
@@ -206,6 +196,24 @@ const updateQuestionController = async (req, res) => {
     }
   });
 
+  if (Object.keys(fieldsToUpdate).length == 0) {
+    return res.status(400).send({
+      success: false,
+      message: "No Data Found to update",
+      data: fieldsToUpdate,
+    });
+  }
+
+  const q = await getExistingQuestionById(quid);
+
+  if (!q) {
+    return res.status(404).send({
+      success: false,
+      message: "Question Does Not Exists with given quid",
+      data: fieldsToUpdate,
+    });
+  }
+
   try {
     //check if the question exists with with same level
     const matchedQuestion = await questionModel.aggregate([
@@ -220,21 +228,30 @@ const updateQuestionController = async (req, res) => {
     ]);
 
     //error if question with the same level already exists
-    if (matchedQuestion.length) {
+    if (matchedQuestion.length > 0) {
       return res.status(400).send({
         success: false,
-        message: "Question Already Exists",
+        message: "Question Already Exists at same level",
         data: fieldsToUpdate,
       });
     }
 
     //update the fields
-    const updatedFields = await questionModel.updateOne(
-      { _id: quid },
-      {
-        $set: fieldsToUpdate,
-      }
-    );
+    const updatedFields = await questionModel
+      .updateOne(
+        { _id: quid },
+        {
+          $set: fieldsToUpdate,
+        },
+        { runValidators: true }
+      )
+      .catch((er) => {
+        return res.status(400).send({
+          success: false,
+          message: er.name,
+          data: er,
+        });
+      });
 
     //error if modified count is not 1 as we are updating only one question here
     if (updatedFields.modifiedCount != 1) {
@@ -253,7 +270,7 @@ const updateQuestionController = async (req, res) => {
   } catch (error) {
     return res.status(500).send({
       success: false,
-      message: error.message || "Failed to update",
+      message: error.name || "Failed to update",
       data: fieldsToUpdate,
     });
   }
@@ -339,6 +356,7 @@ const getRandomQuestionController = async (req, res) => {
   }
   // Get one random document matching {a: 10} from the mycoll collection.
   const r_que = await questionModel.aggregate([
+    { $match: { isActive: true } },
     { $match: matchConditions },
     { $sample: { size: 1 } },
   ]);
