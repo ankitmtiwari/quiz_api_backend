@@ -322,16 +322,17 @@ const getAllQuestionController = async (req, res) => {
 };
 
 const getRandomQuestionController = async (req, res) => {
-  const { level, subject, questionType } = req.body;
+  const { level, subject, questionType, noQue } = req.body;
+  console.log(noQue);
   if (
-    [level, subject, questionType].every(
+    [level, subject, questionType, noQue].every(
       (field) => field?.trim() === undefined || field?.trim() === ""
     )
   ) {
     return res.status(400).send({
       success: false,
       message:
-        "Atleast one parameter required (level, subject, questionType) to get a question of choice",
+        "Atleast one parameter required (level, subject, questionType, noQue) to get a question of choice",
       data: {},
     });
   }
@@ -354,11 +355,12 @@ const getRandomQuestionController = async (req, res) => {
   if (questionType) {
     matchConditions.questionType = questionType;
   }
+
   // Get one random document matching {a: 10} from the mycoll collection.
   const r_que = await questionModel.aggregate([
     { $match: { isActive: true } },
     { $match: matchConditions },
-    { $sample: { size: 1 } },
+    { $sample: { size: parseInt(noQue) } },
   ]);
 
   if (!r_que || !Array.isArray(r_que) || r_que.length === 0) {
@@ -370,7 +372,7 @@ const getRandomQuestionController = async (req, res) => {
   return res.status(200).send({
     success: true,
     message: "Question fetched successfully",
-    data: r_que[0],
+    data: r_que,
   });
 };
 
