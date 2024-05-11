@@ -236,29 +236,29 @@ const updateQuestionController = async (req, res) => {
       });
     }
 
-    //update the fields
-    const updatedFields = await questionModel
-      .updateOne(
+    try {
+      //update the fields
+      const updatedFields = await questionModel.updateOne(
         { _id: quid },
         {
           $set: fieldsToUpdate,
         },
         { runValidators: true }
-      )
-      .catch((er) => {
+      );
+
+      //error if modified count is not 1 as we are updating only one question here
+      if (updatedFields.modifiedCount != 1) {
         return res.status(400).send({
           success: false,
-          message: er.name,
-          data: er,
+          message: "No fields updated",
+          data: {},
         });
-      });
-
-    //error if modified count is not 1 as we are updating only one question here
-    if (updatedFields.modifiedCount != 1) {
+      }
+    } catch (error) {
       return res.status(400).send({
         success: false,
-        message: "No fields updated",
-        data: {},
+        message: error.name,
+        data: error,
       });
     }
 
@@ -271,7 +271,7 @@ const updateQuestionController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: error.name || "Failed to update",
-      data: fieldsToUpdate,
+      data: error,
     });
   }
 };
