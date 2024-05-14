@@ -41,6 +41,10 @@ const quizContestSchema = new mongoose.Schema(
       require: [true, "Contest Status is required"],
       default: true,
     },
+    isContestDeleted: {
+      type: Boolean,
+      default: false,
+    },
     createdBy: {
       type: mongoose.Types.ObjectId,
       ref: "User",

@@ -214,9 +214,7 @@ const updateQuestionController = async (req, res) => {
     });
   }
 
-  const questionAddedUserId = await q.addedBy;
-
-  if (questionAddedUserId !== req.user._id) {
+  if (q.addedBy !== req.user._id) {
     return res.status(401).send({
       success: false,
       message: "Not Authorized to update this question",

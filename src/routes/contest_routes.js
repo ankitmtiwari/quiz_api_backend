@@ -22,6 +22,6 @@ contestRouter
   .post(checkAuthMiddleware, updateContestController);
 contestRouter
   .route("/delete")
-  .post(checkAuthMiddleware, deleteContestController);
+  .delete(checkAuthMiddleware, deleteContestController);
 
 export { contestRouter };

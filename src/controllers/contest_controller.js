@@ -203,10 +203,12 @@ const getAllContestsController = async (req, res) => {
       data: {},
     });
   }
-  const contests = await contestModel.find({ createdBy: usr._id }).populate({
-    path: "allQuestions",
-    select: "question allAnswers correctAnswerIndex timeRequired",
-  });
+  const contests = await contestModel
+    .find({ createdBy: usr._id, isContestDeleted: false })
+    .populate({
+      path: "allQuestions",
+      select: "question allAnswers correctAnswerIndex timeRequired",
+    });
 
   if (contests.length == 0) {
     return res.status(404).send({
@@ -233,7 +235,72 @@ const updateContestController = async (req, res) => {
 };
 
 const deleteContestController = async (req, res) => {
-  res.send("DELETED CONTEST");
+  const { contestIds } = req.body;
+
+  if (contestIds.length == 0) {
+    return res
+      .status(400)
+      .send({ success: false, message: "contest id is required", data: {} });
+  }
+
+  if (!req.user._id) {
+    //check if user is available through middleware
+    return res
+      .status(401)
+      .send({ success: false, message: "Invalid request", data: {} });
+  }
+
+  //check if user exists in db
+  const usr = await userModel.findById(req.user._id);
+
+  //error if no user
+  if (!usr) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid user",
+      data: {},
+    });
+  }
+
+  try {
+    const contestDeleteSummary = await contestModel
+      .updateMany(
+        {
+          _id: { $in: contestIds },
+          createdBy: usr._id,
+          isContestDeleted: false,
+        },
+        {
+          $set: { isContestDeleted: true },
+        }
+      )
+      .catch((err) => {
+        return res.status(500).send({
+          success: false,
+          message: "Failed to mark as deleted",
+          data: err,
+        });
+      });
+
+    if (contestDeleteSummary.modifiedCount == 0) {
+      return res.status(400).send({
+        success: false,
+        message: "Nothing to delete",
+        data: {},
+      });
+    }
+    return res.status(200).send({
+      success: true,
+      message: "contests deleted successfully",
+      data: {},
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: error.name || "Failed to update delete flag",
+      data: error,
+    });
+  }
 };
 
 export {
