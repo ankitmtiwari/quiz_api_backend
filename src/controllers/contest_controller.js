@@ -30,6 +30,7 @@ const createContestController = async (req, res) => {
       .send({ success: false, message: "All Fields are required" });
   }
 
+  //match parameters for the contest questions
   const matchConditions = {};
   // Add conditions for provided parameters
   if (level) {
@@ -76,6 +77,7 @@ const createContestController = async (req, res) => {
         });
       });
 
+    //error if required no of question are not in db
     if (allQuestions.length != noOfQuestions) {
       return res.status(400).send({
         success: false,
@@ -88,6 +90,7 @@ const createContestController = async (req, res) => {
     //   allQuestions.map((qus) => qus._id)
     // );
 
+    //create contest
     const createdContest = await contestModel
       .create({
         contestName,
@@ -102,13 +105,18 @@ const createContestController = async (req, res) => {
         throw er;
       });
 
+    //populate question allAnswers and correctAnswerIndex for each question of the contest
     await createdContest
       .populate({
         path: "allQuestions",
         select: "question allAnswers correctAnswerIndex",
       })
       .catch((er) => {
-        throw er;
+        return res.status(500).send({
+          success: false,
+          message: "populate question Failed",
+          data: {},
+        });
       });
 
     // console.log(d);
@@ -127,7 +135,53 @@ const createContestController = async (req, res) => {
 };
 
 const getContestController = async (req, res) => {
-  res.send("GET CONTEST");
+  const { contestId } = req.body;
+
+  if (contestId == undefined || contestId == "") {
+    return res
+      .status(400)
+      .send({ success: false, message: "contest id is required", data: {} });
+  }
+
+  if (!req.user._id) {
+    //check if user is available through middleware
+    return res
+      .status(401)
+      .send({ success: false, message: "Invalid request", data: {} });
+  }
+
+  //check if user exists in db
+  const usr = await userModel.findById(req.user._id);
+
+  //error if no user
+  if (!usr) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid user",
+      data: {},
+    });
+  }
+  const contest = await contestModel.findById(contestId);
+
+  if (!contest) {
+    return res.status(404).send({
+      success: false,
+      message: "No contest found Or Invalid credentials",
+      data: {},
+    });
+  }
+
+  await contest.populate({
+    path: "allQuestions createdBy",
+    select:
+      "question allAnswers timeRequired firstName lastName schoolName userName -_id",
+  });
+
+  res.status(200).send({
+    success: true,
+    message: "contest fetched successfully",
+    data: contest,
+  });
 };
 
 const updateContestController = async (req, res) => {
