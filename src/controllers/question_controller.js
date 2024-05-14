@@ -214,6 +214,15 @@ const updateQuestionController = async (req, res) => {
     });
   }
 
+  const questionAddedUserId = await q.addedBy;
+
+  if (questionAddedUserId !== req.user._id) {
+    return res.status(401).send({
+      success: false,
+      message: "Not Authorized to update this question",
+      data: {},
+    });
+  }
   try {
     //check if the question exists with with same level
     const matchedQuestion = await questionModel.aggregate([

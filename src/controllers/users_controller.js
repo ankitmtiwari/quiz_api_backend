@@ -1,7 +1,6 @@
 import { userModel } from "../models/user_model.js";
 import { ApiResponse } from "../utils/api_response.js";
 import { ApiError } from "../utils/api_error.js";
-import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/async_handler.js";
 
 //generate and save authToken and refresh Token
@@ -60,9 +59,11 @@ const registerUserController = async (req, res) => {
       role,
     ].some((field) => field?.trim() === undefined || field?.trim() === "")
   ) {
-    return res
-      .status(400)
-      .send({ success: false, message: "All Fields are required" });
+    return res.status(400).send({
+      success: false,
+      message:
+        "All Fields are required firstName,lastName,userName,email,password,phoneNumber, schoolName,role",
+    });
   }
 
   // check if user already exists with email or username

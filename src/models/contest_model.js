@@ -6,6 +6,7 @@ const quizContestSchema = new mongoose.Schema(
       type: "String",
       require: true,
       default: "Simple Quiz Contest",
+      trim: true,
     },
     noOfQuestions: {
       type: Number,
@@ -17,6 +18,12 @@ const quizContestSchema = new mongoose.Schema(
         ref: "Question",
       },
     ],
+    questionScope: {
+      type: String,
+      require: [true, "questionScope is required to create contest"],
+      enum: ["private", "public"],
+      default: "public",
+    },
     contestDuration: {
       type: Number,
       require: [true, "Duration of contest is required"],
@@ -35,7 +42,7 @@ const quizContestSchema = new mongoose.Schema(
       default: true,
     },
     createdBy: {
-      type: Object.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "User",
       required: [true, "created by user is requred"],
     },
