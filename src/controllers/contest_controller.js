@@ -15,7 +15,6 @@ const createContestController = async (req, res) => {
   } = req.body;
 
   const contestScope = questionScope || "public";
-
   //check if all fields are provided
   if (
     [
@@ -31,9 +30,7 @@ const createContestController = async (req, res) => {
       .send({ success: false, message: "All Fields are required" });
   }
 
-  //method three to make a object that has all the update fileds
   const matchConditions = {};
-
   // Add conditions for provided parameters
   if (level) {
     matchConditions.level = level;
@@ -41,7 +38,6 @@ const createContestController = async (req, res) => {
   if (subject) {
     matchConditions.subject = subject;
   }
-
   if (contestScope == "private") {
     matchConditions.addedBy = req.user._id;
   }
@@ -66,16 +62,31 @@ const createContestController = async (req, res) => {
   }
 
   try {
-    console.log("Filter Conditions are:", matchConditions);
-    const allQuestions = await questionModel.aggregate([
-      { $match: matchConditions },
-      { $sample: { size: parseInt(noOfQuestions) } },
-    ]);
+    // console.log("Filter Conditions are:", matchConditions);
+    const allQuestions = await questionModel
+      .aggregate([
+        { $match: matchConditions },
+        { $sample: { size: parseInt(noOfQuestions) } },
+      ])
+      .catch((err) => {
+        return res.status(500).send({
+          success: false,
+          message: err.message || "Fetching question for contest pipe broken",
+          data: err,
+        });
+      });
 
-    console.log(
-      "ALL QUES ARE:",
-      allQuestions.map((qus) => qus._id)
-    );
+    if (allQuestions.length != noOfQuestions) {
+      return res.status(400).send({
+        success: false,
+        message: `${noOfQuestions} questions are not available to create contest only ${allQuestions.length} available`,
+        date: {},
+      });
+    }
+    // console.log(
+    //   "ALL QUES ARE:",
+    //   allQuestions.map((qus) => qus._id)
+    // );
 
     const createdContest = await contestModel
       .create({
@@ -90,6 +101,17 @@ const createContestController = async (req, res) => {
       .catch((er) => {
         throw er;
       });
+
+    await createdContest
+      .populate({
+        path: "allQuestions",
+        select: "question allAnswers correctAnswerIndex",
+      })
+      .catch((er) => {
+        throw er;
+      });
+
+    // console.log(d);
     return res.status(200).send({
       success: true,
       message: "Contest Created Successfully",
