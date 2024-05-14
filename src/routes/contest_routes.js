@@ -3,6 +3,7 @@ import { checkAuthMiddleware } from "../middlewares/auth_middleware.js";
 import {
   createContestController,
   deleteContestController,
+  getAllContestsController,
   getContestController,
   updateContestController,
 } from "../controllers/contest_controller.js";
@@ -10,9 +11,12 @@ import {
 const contestRouter = Router();
 
 contestRouter
-  .route("/create") 
+  .route("/create")
   .post(checkAuthMiddleware, createContestController);
 contestRouter.route("/get").get(checkAuthMiddleware, getContestController);
+contestRouter
+  .route("/getAllContests")
+  .get(checkAuthMiddleware, getAllContestsController);
 contestRouter
   .route("/update")
   .post(checkAuthMiddleware, updateContestController);

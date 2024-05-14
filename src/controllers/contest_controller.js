@@ -184,6 +184,50 @@ const getContestController = async (req, res) => {
   });
 };
 
+const getAllContestsController = async (req, res) => {
+  if (!req.user._id) {
+    //check if user is available through middleware
+    return res
+      .status(401)
+      .send({ success: false, message: "Invalid request", data: {} });
+  }
+
+  //check if user exists in db
+  const usr = await userModel.findById(req.user._id);
+
+  //error if no user
+  if (!usr) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid user",
+      data: {},
+    });
+  }
+  const contests = await contestModel.find({ createdBy: usr._id }).populate({
+    path: "allQuestions",
+    select: "question allAnswers correctAnswerIndex timeRequired",
+  });
+
+  if (contests.length == 0) {
+    return res.status(404).send({
+      success: false,
+      message: "No contest found Or Invalid credentials",
+      data: {},
+    });
+  }
+
+  //   await contests.populate({
+  //     path: "allQuestions",
+  //     select: "question allAnswers correctAnswerIndex timeRequired",
+  //   });
+
+  res.status(200).send({
+    success: true,
+    message: "contests fetched successfully",
+    data: contests,
+  });
+};
+
 const updateContestController = async (req, res) => {
   res.send("UPDATED CONTEST");
 };
@@ -195,6 +239,7 @@ const deleteContestController = async (req, res) => {
 export {
   createContestController,
   getContestController,
+  getAllContestsController,
   updateContestController,
   deleteContestController,
 };
