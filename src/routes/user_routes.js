@@ -22,4 +22,4 @@ userRouters
   .patch(checkAuthMiddleware, updatePasswordController);
 userRouters.route("/getCurrentUser").get(checkAuthMiddleware, getCurrentUser);
 
-export default userRouters;
+export { userRouters };
