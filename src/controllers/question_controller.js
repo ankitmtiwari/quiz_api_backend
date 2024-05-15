@@ -31,7 +31,7 @@ const createQuestionController = async (req, res) => {
   ) {
     return res
       .status(400)
-      .send({ success: false, message: "All Fields are required" });
+      .send({ success: false, message: "All Fields are required question, correcrAnswerIndex, subject, level, questionType, timeRequired" });
   }
 
   //check if atleast 2 options are given

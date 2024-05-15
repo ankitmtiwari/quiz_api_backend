@@ -1,3 +1,4 @@
+import { compareSync } from "bcrypt";
 import { contestModel } from "../models/contest_model.js";
 import { questionModel } from "../models/question_model.js";
 import { userModel } from "../models/user_model.js";
@@ -12,9 +13,11 @@ const createContestController = async (req, res) => {
     questionScope,
     subject,
     level,
+    forceCreateFlag
   } = req.body;
 
-  const contestScope = questionScope || "public";
+  const contestQuestionScope = questionScope || "public";
+  console.log("Contest Question Scope set to:", contestQuestionScope);
   //check if all fields are provided
   if (
     [
@@ -23,11 +26,14 @@ const createContestController = async (req, res) => {
       contestDuration,
       contestStartDateTime,
       contestEndDateTime,
-    ].some((field) => field?.trim() === undefined || field?.trim() === "")
+      subject,
+      level,
+      forceCreateFlag,
+    ].some((field) => field === undefined || field === "")
   ) {
     return res
       .status(400)
-      .send({ success: false, message: "All Fields are required" });
+      .send({ success: false, message: "All Fields are required contestName, noOfQuestions, contestDuration, contestStartDateTime,contestEndDateTime, subject, level, forceCreateFlag" });
   }
 
   //match parameters for the contest questions
@@ -39,10 +45,11 @@ const createContestController = async (req, res) => {
   if (subject) {
     matchConditions.subject = subject;
   }
-  if (contestScope == "private") {
+  if (contestQuestionScope == "private") {
     matchConditions.addedBy = req.user._id;
   }
 
+  // console.log(matchConditions);
   //check if user is available through middleware
   if (!req.user._id) {
     return res
@@ -77,14 +84,24 @@ const createContestController = async (req, res) => {
         });
       });
 
+      if(allQuestions.length ==0)
+        {
+          return res.status(400).send({success:false, message:"No questions found, Failed to create contest", data:{}});
+        }
+
+    // console.log(forceCreateFlag, allQuestions.length,noOfQuestions );
     //error if required no of question are not in db
-    if (allQuestions.length != noOfQuestions) {
-      return res.status(400).send({
-        success: false,
-        message: `${noOfQuestions} questions are not available to create contest only ${allQuestions.length} available`,
-        date: {},
-      });
+    if(forceCreateFlag == false){
+      // console.log("Force is false do not create with less question")
+      if ( allQuestions.length != noOfQuestions) {
+        return res.status(400).send({
+          success: false,
+          message: `${noOfQuestions} questions are not available to create contest only ${allQuestions.length} available`,
+          date: {},
+        });
+      }
     }
+   
     // console.log(
     //   "ALL QUES ARE:",
     //   allQuestions.map((qus) => qus._id)
@@ -94,7 +111,7 @@ const createContestController = async (req, res) => {
     const createdContest = await contestModel
       .create({
         contestName,
-        noOfQuestions,
+        noOfQuestions:allQuestions.length,
         allQuestions,
         contestDuration,
         contestStartDateTime,

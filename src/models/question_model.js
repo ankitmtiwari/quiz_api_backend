@@ -30,7 +30,7 @@ const questionSchema = new mongoose.Schema(
     questionType: {
       type: String,
       required: true,
-      enum: ["mcq", "true_False"],
+      enum: ["mcq", "true_false"],
       default: "mcq",
     },
     timeRequired: {
