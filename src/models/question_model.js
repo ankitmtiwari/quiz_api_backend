@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const questionSchema = mongoose.Schema(
+const questionSchema = new mongoose.Schema(
   {
     question: {
       type: String,
@@ -42,10 +42,15 @@ const questionSchema = mongoose.Schema(
       ref: "User",
       required: [true, "Added by user is requred"],
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
 
+questionSchema.index({ question: 1, level: 1 }, { unique: true });
 // questionSchema.pre("save", async function (next) {
 //   console.log("Before creating new question", this.question);
 // });

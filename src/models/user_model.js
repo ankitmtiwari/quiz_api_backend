@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const userSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
@@ -55,6 +55,14 @@ const userSchema = mongoose.Schema(
     },
     refreshToken: {
       type: String,
+    },
+    isAcDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    isAcDeactivated: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

@@ -1,6 +1,11 @@
 import { userModel } from "../models/user_model.js";
 import { questionModel } from "../models/question_model.js";
 
+const getExistingQuestionById = async (quid) => {
+  const existingQuestion = await questionModel.findById(quid);
+  return existingQuestion;
+};
+
 const createQuestionController = async (req, res) => {
   //get data sent from client
   const {
@@ -13,14 +18,6 @@ const createQuestionController = async (req, res) => {
     timeRequired,
   } = req.body;
 
-  //check if atleast 2 options are given
-  if (allAnswers.length < 2) {
-    return res.status(400).send({
-      success: false,
-      message: "minimum two answers are required",
-      data: { allAnswers },
-    });
-  }
   //check if all fields are provided
   if (
     [
@@ -35,6 +32,15 @@ const createQuestionController = async (req, res) => {
     return res
       .status(400)
       .send({ success: false, message: "All Fields are required" });
+  }
+
+  //check if atleast 2 options are given
+  if (allAnswers.length < 2) {
+    return res.status(400).send({
+      success: false,
+      message: "minimum two answers are required",
+      data: { allAnswers },
+    });
   }
 
   //check if user is available through middleware
@@ -114,11 +120,208 @@ const createQuestionController = async (req, res) => {
 };
 
 const updateQuestionController = async (req, res) => {
-  res.send("Update Question Sucess");
+  //get the data from client
+  const {
+    quid,
+    question,
+    allAnswers,
+    correctAnswerIndex,
+    subject,
+    level,
+    questionType,
+    timeRequired,
+  } = req.body;
+
+  //error if quid(question id) is not given
+  if (!quid) {
+    return res
+      .status(400)
+      .send({ success: false, message: "question id is required", data: {} });
+  }
+
+  //method one to make a object that has all the update fileds
+  /*
+  // const fieldsToUpdate = {};
+  // if (question) {
+  //   fieldsToUpdate.question = question;
+  // }
+  // if (allAnswers) {
+  //   fieldsToUpdate.allAnswers = allAnswers;
+  // }
+  // if (correctAnswerIndex) {
+  //   fieldsToUpdate.correctAnswerIndex = correctAnswerIndex;
+  // }
+  // if (subject) {
+  //   fieldsToUpdate.subject = subject;
+  // }
+  // if (level) {
+  //   fieldsToUpdate.level = level;
+  // }
+
+  // if (questionType) {
+  //   fieldsToUpdate.questionType = questionType;
+  // }
+  // if (timeRequired) {
+  //   fieldsToUpdate.timeRequired = timeRequired;
+  // }
+*/
+
+  //method two to make a object that has all the update fileds
+  /*
+  // Object.assign(fieldsToUpdate, {
+  //   question,
+  //   allAnswers,
+  //   correctAnswerIndex,
+  //   subject,
+  //   level,
+  //   questionType,
+  //   timeRequired,
+  // });
+*/
+
+  //method three to make a object that has all the update fileds
+  const fieldsToUpdate = {
+    question,
+    allAnswers,
+    correctAnswerIndex,
+    subject,
+    level,
+    questionType,
+    timeRequired,
+  };
+
+  Object.keys(fieldsToUpdate).forEach((key) => {
+    if (fieldsToUpdate[key] === undefined) {
+      delete fieldsToUpdate[key];
+    }
+  });
+
+  if (Object.keys(fieldsToUpdate).length == 0) {
+    return res.status(400).send({
+      success: false,
+      message: "No Data Found to update",
+      data: fieldsToUpdate,
+    });
+  }
+
+  const q = await getExistingQuestionById(quid);
+
+  if (!q) {
+    return res.status(404).send({
+      success: false,
+      message: "Question Does Not Exists with given quid",
+      data: fieldsToUpdate,
+    });
+  }
+
+  if (q.addedBy !== req.user._id) {
+    return res.status(401).send({
+      success: false,
+      message: "Not Authorized to update this question",
+      data: {},
+    });
+  }
+  try {
+    //check if the question exists with with same level
+    const matchedQuestion = await questionModel.aggregate([
+      {
+        $match: {
+          question: question,
+          level: level,
+          // timeRequired: timeRequired,
+        },
+      },
+      { $sample: { size: 1 } },
+    ]);
+
+    //error if question with the same level already exists
+    if (matchedQuestion.length > 0) {
+      return res.status(400).send({
+        success: false,
+        message: "Question Already Exists at same level",
+        data: fieldsToUpdate,
+      });
+    }
+
+    try {
+      //update the fields
+      const updatedFields = await questionModel.updateOne(
+        { _id: quid },
+        {
+          $set: fieldsToUpdate,
+        },
+        { runValidators: true }
+      );
+
+      //error if modified count is not 1 as we are updating only one question here
+      if (updatedFields.modifiedCount != 1) {
+        return res.status(400).send({
+          success: false,
+          message: "No fields updated",
+          data: {},
+        });
+      }
+    } catch (error) {
+      return res.status(400).send({
+        success: false,
+        message: error.name,
+        data: error,
+      });
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "Question Updated Successfully",
+      data: fieldsToUpdate,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: error.name || "Failed to update",
+      data: error,
+    });
+  }
 };
 
 const deleteQuestionController = async (req, res) => {
-  res.send("Delete Question Sucess");
+  const { quid } = req.body;
+  if (!req.user._id) {
+    return res.status(401).send({
+      success: false,
+      message: "Invalid request or UnAuthorized request",
+      data: {},
+    });
+  }
+  // console.log(quid);
+  // const existingQuestion = await questionModel.findById(quid);
+
+  // //error if question does not exists with given id
+  // if (!existingQuestion) {
+  //   return res.status(404).send({
+  //     success: false,
+  //     message: "Question does not exists with given credentials",
+  //     data: { quid },
+  //   });
+  // }
+  const questionDeeleteMarkSUmmary = await questionModel
+    .updateOne({ _id: quid }, { $set: { isActive: false } })
+    .catch((err) => {
+      return res.status(500).send({
+        success: false,
+        message: "Failed to mark as deleted",
+        data: err,
+      });
+    });
+
+  // console.log(questionDeeleteMarkSUmmary);
+  if (questionDeeleteMarkSUmmary.modifiedCount != 1) {
+    return res
+      .status(400)
+      .send({ success: false, message: "Failed to mark as deleted", data: {} });
+  }
+  return res
+    .status(200)
+    .send({ success: true, message: "Delete Question Sucess", data: {} });
 };
 
 const getAllQuestionController = async (req, res) => {
@@ -126,15 +329,17 @@ const getAllQuestionController = async (req, res) => {
 };
 
 const getRandomQuestionController = async (req, res) => {
-  const { level, subject, questionType } = req.body;
+  const { level, subject, questionType, noQue } = req.body;
+  console.log(noQue);
   if (
-    [level, subject, questionType].every(
+    [level, subject, questionType, noQue].every(
       (field) => field?.trim() === undefined || field?.trim() === ""
     )
   ) {
     return res.status(400).send({
       success: false,
-      message: "Atleast one parameter required to get a question of choice",
+      message:
+        "Atleast one parameter required (level, subject, questionType, noQue) to get a question of choice",
       data: {},
     });
   }
@@ -157,13 +362,15 @@ const getRandomQuestionController = async (req, res) => {
   if (questionType) {
     matchConditions.questionType = questionType;
   }
+
   // Get one random document matching {a: 10} from the mycoll collection.
   const r_que = await questionModel.aggregate([
+    { $match: { isActive: true } },
     { $match: matchConditions },
-    { $sample: { size: 1 } },
+    { $sample: { size: parseInt(noQue) } },
   ]);
 
-  if (!r_que) {
+  if (!r_que || !Array.isArray(r_que) || r_que.length === 0) {
     return res
       .status(404)
       .send({ success: false, message: "No question found", data: {} });

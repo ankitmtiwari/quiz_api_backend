@@ -21,11 +21,14 @@ app.use(express.static("public"));
 //to use cookies
 app.use(cookieParser());
 
-//All Routes
-import userRouters from "./src/routes/user_routes.js";
-import { questionRoutes } from "./src/routes/question_routes.js";
+//All Routers import
+import { userRouters } from "./src/routes/user_routes.js";
+import { questionRouter } from "./src/routes/question_routes.js";
+import { contestRouter } from "./src/routes/contest_routes.js";
 
+//all the routes
 app.use("/api/v1/users", userRouters);
-app.use("/api/v1/questions", questionRoutes);
+app.use("/api/v1/questions", questionRouter);
+app.use("/api/v1/contests", contestRouter);
 
 export { app };

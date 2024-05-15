@@ -16,8 +16,10 @@ const userRouters = Router();
 userRouters.route("/register").post(registerUserController);
 userRouters.route("/login").post(loginUserController);
 userRouters.route("/logout").post(checkAuthMiddleware, logoutUserController);
-userRouters.route("/delete").post(deleteUserController);
-userRouters.route("/updatePassword").post(updatePasswordController);
+userRouters.route("/delete").delete(checkAuthMiddleware, deleteUserController);
+userRouters
+  .route("/updatePassword")
+  .patch(checkAuthMiddleware, updatePasswordController);
 userRouters.route("/getCurrentUser").get(checkAuthMiddleware, getCurrentUser);
 
-export default userRouters;
+export { userRouters };

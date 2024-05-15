@@ -8,29 +8,29 @@ import {
 } from "../controllers/question_controller.js";
 import { checkAuthMiddleware } from "../middlewares/auth_middleware.js";
 
-const questionRoutes = Router();
+const questionRouter = Router();
 
 //create question
-questionRoutes
+questionRouter
   .route("/create")
   .post(checkAuthMiddleware, createQuestionController);
 
 //update question
-questionRoutes
+questionRouter
   .route("/update")
-  .post(checkAuthMiddleware, updateQuestionController);
+  .patch(checkAuthMiddleware, updateQuestionController);
 
 //delete question
-questionRoutes
+questionRouter
   .route("/delete")
-  .post(checkAuthMiddleware, deleteQuestionController);
+  .delete(checkAuthMiddleware, deleteQuestionController);
 
 //get all questions
-questionRoutes
+questionRouter
   .route("/getall")
   .post(checkAuthMiddleware, getAllQuestionController);
 
 //get any one random question based on the given parameters
-questionRoutes.route("/getRandomQuestion").get(getRandomQuestionController);
+questionRouter.route("/getRandomQuestion").get(getRandomQuestionController);
 
-export { questionRoutes };
+export { questionRouter };
