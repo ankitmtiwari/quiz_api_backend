@@ -31,10 +31,12 @@ const quizContestSchema = new mongoose.Schema(
     contestStartDateTime: {
       type: Date,
       require: [true, "contest start date time is required"],
+      default: Date()
     },
     contestEndDateTime: {
       type: Date,
       require: [true, "contest start date time is required"],
+      default: Date()
     },
     isActive: {
       type: Boolean,

@@ -19,7 +19,7 @@ contestRouter
   .get(checkAuthMiddleware, getAllContestsController);
 contestRouter
   .route("/update")
-  .patch(checkAuthMiddleware, updateContestController);
+  .post(checkAuthMiddleware, updateContestController);
 contestRouter
   .route("/delete")
   .delete(checkAuthMiddleware, deleteContestController);
