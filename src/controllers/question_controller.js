@@ -204,23 +204,24 @@ const updateQuestionController = async (req, res) => {
     });
   }
 
-  const q = await getExistingQuestionById(quid);
+  // const q = await getExistingQuestionById(quid);
+  const q = await questionModel.findOne({ _id: quid, addedBy: req.user._id });
 
   if (!q) {
     return res.status(404).send({
       success: false,
-      message: "Question Does Not Exists with given quid",
+      message: "Question Does Not Exists with given credentials",
       data: fieldsToUpdate,
     });
   }
 
-  if (q.addedBy !== req.user._id) {
-    return res.status(401).send({
-      success: false,
-      message: "Not Authorized to update this question",
-      data: {},
-    });
-  }
+  // if (q.addedBy !== req.user._id) {
+  //   return res.status(401).send({
+  //     success: false,
+  //     message: "Not Authorized to update this question",
+  //     data: {},
+  //   });
+  // }
   try {
     //check if the question exists with with same level
     const matchedQuestion = await questionModel.aggregate([
