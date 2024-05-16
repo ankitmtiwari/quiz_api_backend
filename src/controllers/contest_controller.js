@@ -12,9 +12,10 @@ const createContestController = async (req, res) => {
     questionScope,
     subject,
     level,
+    forceCreateFlag,
   } = req.body;
 
-  const contestScope = questionScope || "public";
+  const contestQuestionScope = questionScope || "public";
   //check if all fields are provided
   if (
     [
@@ -23,11 +24,16 @@ const createContestController = async (req, res) => {
       contestDuration,
       contestStartDateTime,
       contestEndDateTime,
+      subject,
+      level,
+      forceCreateFlag,
     ].some((field) => field?.trim() === undefined || field?.trim() === "")
   ) {
-    return res
-      .status(400)
-      .send({ success: false, message: "All Fields are required" });
+    return res.status(400).send({
+      success: false,
+      message:
+        "All Fields are required contestName, noOfQuestions, contestDuration, contestStartDateTime,contestEndDateTime, subject, level, forceCreateFlag",
+    });
   }
 
   //match parameters for the contest questions
@@ -39,7 +45,7 @@ const createContestController = async (req, res) => {
   if (subject) {
     matchConditions.subject = subject;
   }
-  if (contestScope == "private") {
+  if (contestQuestionScope == "private") {
     matchConditions.addedBy = req.user._id;
   }
 
@@ -77,14 +83,35 @@ const createContestController = async (req, res) => {
         });
       });
 
-    //error if required no of question are not in db
-    if (allQuestions.length != noOfQuestions) {
+    if (allQuestions.length == 0) {
       return res.status(400).send({
         success: false,
-        message: `${noOfQuestions} questions are not available to create contest only ${allQuestions.length} available`,
-        date: {},
+        message: "No questions found, Failed to create contest",
+        data: {},
       });
     }
+
+    // console.log(forceCreateFlag, allQuestions.length,noOfQuestions );
+    //error if required no of question are not in db
+    if (forceCreateFlag == false || forceCreateFlag == "false") {
+      // console.log("Force is false do not create with less question")
+      if (allQuestions.length != noOfQuestions) {
+        return res.status(400).send({
+          success: false,
+          message: `${noOfQuestions} questions are not available to create contest only ${allQuestions.length} available`,
+          date: {},
+        });
+      }
+    }
+
+    //error if required no of question are not in db
+    // if (allQuestions.length != noOfQuestions) {
+    //   return res.status(400).send({
+    //     success: false,
+    //     message: `${noOfQuestions} questions are not available to create contest only ${allQuestions.length} available`,
+    //     date: {},
+    //   });
+    // }
     // console.log(
     //   "ALL QUES ARE:",
     //   allQuestions.map((qus) => qus._id)
@@ -94,7 +121,7 @@ const createContestController = async (req, res) => {
     const createdContest = await contestModel
       .create({
         contestName,
-        noOfQuestions,
+        noOfQuestions: allQuestions.length,
         allQuestions,
         contestDuration,
         contestStartDateTime,
@@ -231,7 +258,111 @@ const getAllContestsController = async (req, res) => {
 };
 
 const updateContestController = async (req, res) => {
-  res.send("UPDATED CONTEST");
+  const {
+    contestId,
+    contestName,
+    contestDuration,
+    contestStartDateTime,
+    contestEndDateTime,
+    isActive,
+  } = req.body;
+
+  if (!contestId) {
+    return res
+      .status(400)
+      .send({ success: false, message: "contest Id is required", data: {} });
+  }
+
+  //check if user is available through middleware
+  if (!req.user._id) {
+    return res
+      .status(401)
+      .send({ success: false, message: "Invalid request", data: {} });
+  }
+
+  //check if user exists in db
+  const usr = await userModel.findById(req.user._id);
+
+  //error if no user
+  if (!usr || usr.role == "student") {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid user OR Student cannot update contest",
+      data: {},
+    });
+  }
+
+  const fieldsToUpdate = {
+    contestName,
+    contestDuration,
+    contestStartDateTime,
+    contestEndDateTime,
+    isActive,
+  };
+
+  Object.keys(fieldsToUpdate).forEach((key) => {
+    if (fieldsToUpdate[key] === undefined) {
+      delete fieldsToUpdate[key];
+    }
+  });
+
+  if (Object.keys(fieldsToUpdate).length == 0) {
+    return res.status(400).send({
+      success: false,
+      message: "No Data Found to update",
+      data: fieldsToUpdate,
+    });
+  }
+
+  //!!!! CONTINUE FROM HERE GIVING GOING IN THE BELOW TRY EVEN AFTER RETURNING IN CATCH !!!!!!
+  const dbContest = await contestModel
+    .findOne({ _id: contestId, createdBy: usr._id })
+    .catch((er) => {
+      console.log("EXCEPTION IN GETTING CONTEST");
+      return res
+        .status(500)
+        .send({ success: false, message: er.message, data: er });
+    });
+
+  if (!dbContest) {
+    return res.status(404).send({
+      success: false,
+      message: "contest does not exists with given credentials",
+    });
+  }
+
+  try {
+    console.log("CAM IN TRY", dbContest);
+    const updatedFields = await contestModel.updateOne(
+      { _id: contestId, createdBy: usr._id },
+      {
+        $set: fieldsToUpdate,
+      },
+      { runValidators: true }
+    );
+
+    //error if modified count is not 1 as we are updating only one question here
+    if (updatedFields.modifiedCount != 1) {
+      return res.status(400).send({
+        success: false,
+        message: "No fields updated",
+        data: {},
+      });
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "Contest Updated Successfully",
+      data: fieldsToUpdate,
+    });
+  } catch (error) {
+    console.log("CAME IN CATCH");
+    return res.status(500).send({
+      success: false,
+      message: error.name || "Failed to update contest",
+      data: error,
+    });
+  }
 };
 
 const deleteContestController = async (req, res) => {
