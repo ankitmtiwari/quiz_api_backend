@@ -1,6 +1,7 @@
 import { userModel } from "../models/user_model.js";
 import { questionModel } from "../models/question_model.js";
 
+//get quesyio from quid
 const getExistingQuestionById = async (quid) => {
   const existingQuestion = await questionModel.findById(quid);
   return existingQuestion;
